@@ -1,2 +1,2 @@
 # api
-Aisuru's API written in Typescript with GraphQL!
+Aisuru's API written in Rust with GraphQL!
