@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use bson::{doc, Bson};
 
+use super::beatmap::Beatmap;
 use super::score::Score;
 use crate::DATABASE;
 
@@ -12,6 +13,8 @@ pub struct Scores {
     pub bests: Vec<Score>,
     pub recents: Vec<Score>,
 }
+
+const PP_STATUSES: [i32; 2] = [2, 3]; // ranked, approved
 
 impl Scores {
     pub async fn from_user_id(user_id: i32, mode: i32) -> Self {
@@ -39,7 +42,19 @@ impl Scores {
 
             match db_best {
                 Ok(best) => {
-                    let best_obj: Score = bson::from_bson(Bson::Document(best)).unwrap();
+                    let mut best_obj: Score = bson::from_bson(Bson::Document(best)).unwrap();
+                    let beatmap = Beatmap::from_md5(best_obj.map_md5.clone()).await;
+
+                    if beatmap.is_none() {
+                        continue;
+                    }
+
+                    best_obj.beatmap = beatmap.clone();
+
+                    if !PP_STATUSES.contains(&beatmap.unwrap().status) {
+                        continue;
+                    }
+
                     bests.push(best_obj);
                 }
                 _ => break,
@@ -62,7 +77,15 @@ impl Scores {
 
             match db_recent {
                 Ok(recent) => {
-                    let recent_obj: Score = bson::from_bson(Bson::Document(recent)).unwrap();
+                    let mut recent_obj: Score = bson::from_bson(Bson::Document(recent)).unwrap();
+                    let beatmap = Beatmap::from_md5(recent_obj.map_md5.clone()).await;
+
+                    if beatmap.is_none() {
+                        continue;
+                    }
+
+                    recent_obj.beatmap = beatmap.clone();
+
                     recents.push(recent_obj);
                 }
                 _ => break,

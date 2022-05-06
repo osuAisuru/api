@@ -1,6 +1,8 @@
 use juniper::GraphQLObject;
 use serde::{Deserialize, Serialize};
 
+use super::beatmap::Beatmap;
+
 #[derive(Clone, GraphQLObject, Deserialize, Serialize, Debug)]
 pub struct Score {
     pub id: i32,
@@ -27,4 +29,5 @@ pub struct Score {
     pub time: String,
     pub time_elapsed: i32,
     pub user_id: i32,
+    pub beatmap: Option<Beatmap>,
 }
