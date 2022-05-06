@@ -1,3 +1,4 @@
+use juniper::futures::StreamExt;
 use juniper::GraphQLObject;
 use serde::{Deserialize, Serialize};
 
@@ -45,5 +46,34 @@ impl User {
         };
 
         Some(bson::from_bson(Bson::Document(bson_document)).unwrap())
+    }
+
+    pub async fn search(query: String) -> Vec<Self> {
+        let mut user_vec: Vec<Self> = Vec::new();
+
+        let users = DATABASE.get().unwrap().collection("users");
+        let mut db_bson = users
+            .find(doc! {"$or": [{"name": {"$regex": query.clone(), "$options": "i"}}, {"safe_name": {"$regex": query.clone(), "$options": "i"}}]}, None)
+            .await
+            .unwrap();
+
+        loop {
+            let db_user_res = db_bson.next().await;
+
+            let db_user = match db_user_res {
+                Some(user) => user,
+                _ => break,
+            };
+
+            match db_user {
+                Ok(user) => {
+                    let user_obj: User = bson::from_bson(Bson::Document(user)).unwrap();
+                    user_vec.push(user_obj);
+                }
+                _ => break,
+            }
+        }
+
+        user_vec
     }
 }

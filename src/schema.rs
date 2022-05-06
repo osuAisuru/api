@@ -1,6 +1,7 @@
 use juniper::FieldResult;
 use juniper::{EmptyMutation, EmptySubscription, RootNode};
 
+use crate::models::leaderboard::Leaderboard;
 use crate::models::scores::Scores;
 use crate::models::stats::Stats;
 use crate::models::user::User;
@@ -30,6 +31,20 @@ impl QueryRoot {
     async fn user_scores(id: i32, mode: i32) -> FieldResult<Scores> {
         let scores = Scores::from_user_id(id, mode).await;
         FieldResult::Ok(scores)
+    }
+
+    async fn leaderboard(mode: i32, country: Option<String>) -> FieldResult<Leaderboard> {
+        let leaderboard = match country {
+            Some(country) => Leaderboard::for_mode_country(mode, country).await,
+            None => Leaderboard::for_mode(mode).await,
+        };
+
+        FieldResult::Ok(leaderboard)
+    }
+
+    async fn user_search(query: String) -> FieldResult<Vec<User>> {
+        let users = User::search(query).await;
+        FieldResult::Ok(users)
     }
 }
 
