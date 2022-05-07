@@ -2,6 +2,7 @@ use juniper::FieldResult;
 use juniper::{EmptyMutation, EmptySubscription, RootNode};
 
 use crate::models::leaderboard::Leaderboard;
+use crate::models::online::OnlineInfo;
 use crate::models::scores::Scores;
 use crate::models::stats::Stats;
 use crate::models::user::User;
@@ -45,6 +46,11 @@ impl QueryRoot {
     async fn user_search(query: String) -> FieldResult<Vec<User>> {
         let users = User::search(query).await;
         FieldResult::Ok(users)
+    }
+
+    async fn online_info() -> FieldResult<OnlineInfo> {
+        let online_info = OnlineInfo::get_online_info().await;
+        FieldResult::Ok(online_info)
     }
 }
 
